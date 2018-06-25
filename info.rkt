@@ -5,6 +5,7 @@
 (define deps
   '("base"
     "txexpr"
+    "txexpr-stxparse"
     "srfi-lite-lib"
     ))
 

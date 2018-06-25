@@ -1,12 +1,16 @@
 #lang racket/base
 
-(provide (all-defined-out))
+(provide duration
+         ~duration
+         durationₑ
+         duration-divisions)
 
 (require racket/contract/base
          racket/match
          (submod txexpr safe)
          "str-number.rkt"
          "attributes.rkt"
+         "util/stxparse.rkt"
          "util/tag.rkt")
 (module+ test
   (require rackunit))
@@ -14,11 +18,16 @@
 
 (define-tag duration '() (list/c str-positive-divisions/c))
 
+;; "duration element"
+(define-syntax-class durationₑ
+  #:attributes [duration-divisions]
+  [pattern {~duration _ (d:str-int)}
+    #:attr duration-divisions (@ d.number)])
+
 ;; duration-divisions : Duration -> PositiveDivisions
 (define (duration-divisions d)
-  (match d
-    [(duration '() (list str))
-     (string->number str)]))
+  (syntax-parse d
+    [d:durationₑ (@ d.duration-divisions)]))
 
 ;; ---------------------------------------------------------
 

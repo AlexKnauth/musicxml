@@ -7,6 +7,7 @@
 (require racket/contract/base
          (submod txexpr safe)
          "str-number.rkt"
+         "util/stxparse.rkt"
          "util/tag.rkt")
 
 ;; ---------------------------------------------------------
@@ -26,4 +27,25 @@
 
 ;; the type of the beats in a time signature
 (define-tag beat-type '() (list/c str-positive-integer?))
+
+;; ---------------------------------------------------------
+
+(define-syntax-class timeₑ
+  [pattern {~time _ (sm:senza-misuraₑ)}]
+  [pattern {~time _ (b:beatsₑ t:beat-typeₑ)}])
+
+(define-syntax-class senza-misuraₑ
+  #:attributes []
+  [pattern {~senza-misura () ()}])
+
+(define-syntax-class beatsₑ
+  #:attributes [beats]
+  [pattern {~beats () (b:str-nat)}
+    #:attr beats (@ b.number)])
+
+(define-syntax-class beat-typeₑ
+  #:attributes []
+  [pattern {~beat-type () (t:str-pos-int)}])
+
+;; ---------------------------------------------------------
 

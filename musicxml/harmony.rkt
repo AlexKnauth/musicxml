@@ -4,7 +4,7 @@
 
 (require racket/contract/base
          (submod txexpr safe)
-         syntax/parse
+         (except-in syntax/parse ~rest)
          "str-number.rkt"
          "attributes.rkt"
          "note.rkt"

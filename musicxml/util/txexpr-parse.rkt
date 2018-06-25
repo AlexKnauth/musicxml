@@ -19,11 +19,15 @@
 ;;   hpat = pat
 
 (require (submod txexpr safe)
+         txexpr/stx
+         txexpr/stx/parse
          syntax/parse/define
          syntax/parse
          racket/match
          (for-syntax racket/base
-                     racket/syntax))
+                     racket/match
+                     racket/syntax
+                     racket/string))
 (module+ test
   (require rackunit))
 
@@ -32,49 +36,69 @@
 
   (define-syntax-class clause
     #:attributes [stxparse-clause]
-    [pattern [pat:pat body:expr]
+    [pattern [{~var pat (pat 0)} body:expr]
       #:with stxparse-clause
       #'[pat.stxparse-pat
          body]])
 
-  (define-syntax-class pat
-    #:attributes [stxparse-pat [id 1]]
+  (define-syntax-class (pat d)
+    #:attributes [stxparse-pat]
 
-    #:literals [quote txexpr list]
-    [pattern x:id
+    #:literals [syntax quote txexpr list]
+
+    [pattern (syntax stxparse-pat)]
+    [pattern (quote dat) #:with stxparse-pat #'(~datum dat)]
+
+    [pattern {~and x:id {~not {~literal ...}}}
+      #:when (not (string-contains? (symbol->string (syntax-e #'x)) ":"))
       #:with tmp (generate-temporary #'x)
       #:with stxparse-pat #'(~and tmp
-                                  (~do (define x (syntax->datum #'tmp))))
-      #:with [id ...] #'[x]]
+                                  (~do (define x #'tmp)))]
+    [pattern {~and x:id {~not {~literal ...}}}
+      #:do [(define str (symbol->string (syntax-e #'x)))]
+      #:when (string-contains? str ":")
+      #:do [(match-define (cons fst rst) (string-split str ":" #:trim? #false))]
+      #:with fst-x (format-id #'x "~a" fst)
+      #:with rst-class (format-id #'x "~a" (string-join rst ":"))
+      #:with tmp (generate-temporary #'x)
+      #:with stxparse-pat #'(~and (~var tmp rst-class)
+                                  (~do (define fst-x #'tmp)))]
+
     [pattern s:str
-      #:with stxparse-pat #'s
-      #:with [id ...] '()]
+      #:with stxparse-pat #'s]
     [pattern n:number
-      #:with stxparse-pat #'n
-      #:with [id ...] '()]
-    [pattern (q:quote dat)
-      #:with stxparse-pat #'(~datum dat)
-      #:with [id ...] '()]
+      #:with stxparse-pat #'n]
 
-    [pattern (tx:txexpr a:pat b:pat c:pat)
-      #:with tmp (generate-temporary)
-      #:with stxparse-pat #'(~and tmp
-                                  (~parse (a.stxparse-pat
-                                           b.stxparse-pat
-                                           c.stxparse-pat)
-                                          (txexpr->list
-                                           (syntax->datum #'tmp))))
-      #:with [id ...] #'[a.id ... b.id ... c.id ...]]
+    [pattern (tx:txexpr {~var a (pat d)}
+                        {~var b (pat d)}
+                        {~var c (pat d)})
+      #:with stxparse-pat
+      #'(~txexpr a.stxparse-pat b.stxparse-pat c.stxparse-pat)]
 
-    [pattern (ls:list hp:hpat ...)
-      #:with stxparse-pat #'(hp.stxparse-pat ...)
-      #:with [id ...] #'[hp.id ... ...]]
+    [pattern (ls:list . {~var lp (lpat d)})
+      #:with stxparse-pat #'lp.stxparse-pat]
     )
 
   ;; eventually, this will support ellipses
-  (define-syntax-class hpat
-    #:attributes [stxparse-pat [id 1]]
-    [pattern :pat])
+  (define-syntax-class (lpat d)
+    #:attributes [stxparse-pat]
+    [pattern {~and () stxparse-pat}]
+    [pattern {~and ({~var hp (hpat d)} . {~var lp (lpat d)})}
+      #:with stxparse-pat #'(hp.stxparse-pat . lp.stxparse-pat)]
+    [pattern {~and ({~var ehp (ehpat (add1 d))}
+                    {~and ooo {~literal ...}}
+                    .
+                    {~var lp (lpat d)})}
+      #:with stxparse-pat #'(ehp.stxparse-pat ooo . lp.stxparse-pat)]
+    )
+  
+  (define-syntax-class (hpat d)
+    #:attributes [stxparse-pat]
+    [pattern {~var || (pat d)}])
+
+  (define-syntax-class (ehpat d)
+    #:attributes [stxparse-pat]
+    [pattern {~var || (hpat d)}])
   )
 
 (define-syntax-parser txexpr-parse
@@ -92,15 +116,15 @@
   (check-equal? (txexpr-parse 2 ['1 'a] ['2 'b])
                 'b)
 
-  (check-equal? (txexpr-parse "natu" [x x]) "natu")
+  (check-equal? (txexpr-parse "natu" [x (syntax->datum x)]) "natu")
   (check-equal? (txexpr-parse (list 1 2 3 4)
-                  [(list 1 2 x 4) x])
+                  [(list 1 2 x 4) (syntax->datum x)])
                 3)
 
   (check-equal? (txexpr-parse (txexpr 'a '()
                                 (list (txexpr 'b '() (list "c"))))
                   [(txexpr 'a '() (list (txexpr 'b '() (list c))))
-                   c])
+                   (syntax->datum c)])
                 "c")
 
   )

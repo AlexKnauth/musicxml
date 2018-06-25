@@ -5,6 +5,7 @@
 (require racket/contract/base
          (submod txexpr safe)
          "str-number.rkt"
+         "util/stxparse.rkt"
          "util/tag.rkt")
 
 ;; The mode type is used to specify major/minor and other
@@ -35,4 +36,27 @@
 (define-tag cancel '() (list/c str-integer?))
 (define-tag fifths '() (list/c str-integer?))
 (define-tag mode '() (list/c str-mode/c))
+
+(define-syntax-class keyₑ
+  #:attributes []
+  [pattern {~key _
+                 ({~optional cancel:cancelₑ}
+                  fifths:fifthsₑ
+                  mode:modeₑ)}])
+
+(define-syntax-class cancelₑ
+  #:attributes [cancel-fifths]
+  [pattern {~cancel () (fifths:str-int)}
+    #:attr cancel-fifths (@ fifths.number)])
+
+(define-syntax-class fifthsₑ
+  #:attributes [fifths]
+  [pattern {~fifths () (fifths*:str-int)}
+    #:attr fifths (@ fifths*.number)])
+
+(define-syntax-class modeₑ
+  #:attributes [mode]
+  [pattern {~mode () (mode*:str)}
+    #:attr mode (@ mode*.string)
+    #:when (str-mode/c (@ mode))])
 
