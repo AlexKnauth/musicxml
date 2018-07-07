@@ -9,15 +9,14 @@
          "forward-backup.rkt"
          (only-in "harmony.rkt"
            harmony function
-           root root-step root-alter
            kind inversion
-           bass bass-step bass-alter
            degree degree-value degree-alter degree-type)
          "key.rkt"
          "measure.rkt"
          "metadata.rkt"
          "music-data.rkt"
          "note.rkt"
+         "pitch.rkt"
          "score-partwise.rkt"
          "time-signature.rkt"
          "voice.rkt"
@@ -37,6 +36,7 @@
           "metadata.rkt"
           "music-data.rkt"
           "note.rkt"
+          "pitch.rkt"
           "score-partwise.rkt"
           "time-signature.rkt"
           "voice.rkt"

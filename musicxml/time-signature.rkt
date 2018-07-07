@@ -7,6 +7,7 @@
 (require racket/contract/base
          (submod txexpr safe)
          "str-number.rkt"
+         "note-type.rkt"
          "util/stxparse.rkt"
          "util/tag.rkt")
 

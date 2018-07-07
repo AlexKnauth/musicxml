@@ -15,6 +15,7 @@
          "../music-data.rkt"
          (except-in "../attributes.rkt" time)
          "../note.rkt"
+         "../pitch.rkt"
          "../duration.rkt"
          )
 

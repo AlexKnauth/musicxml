@@ -23,7 +23,8 @@
          "figured-bass.rkt"
          (except-in "harmony.rkt" alter)
          "voice.rkt"
-         "util/tag.rkt")
+         "util/tag.rkt"
+         "util/stxparse.rkt")
 
 ;; ------------------------------------------------------------------------
 
@@ -40,6 +41,20 @@
         (tag/c note)
         (tag/c print)
         (tag/c sound)))
+
+(define-syntax-class %music-data
+  [pattern :noteₑ]
+  [pattern :backupₑ]
+  [pattern :forwardₑ]
+  [pattern :directionₑ]
+  [pattern :attributesₑ]
+  [pattern :harmonyₑ]
+  [pattern :figured-bassₑ]
+  [pattern :printₑ]
+  [pattern :soundₑ]
+  [pattern :barlineₑ]
+  ;; TODO: grouping, link, and bookmark
+  )
 
 ;; ---------------------------------------------------------
 

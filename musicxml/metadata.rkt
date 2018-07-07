@@ -4,7 +4,10 @@
 
 (require racket/contract/base
          (submod txexpr safe)
-         "util/tag.rkt")
+         "util/tag.rkt"
+         "util/stxparse.rkt")
+
+;; ---------------------------------------------------------
 
 (define work-element/c
   (or/c (tag/c work-number)
@@ -49,4 +52,27 @@
   (attrs-must/c 'type string?)
   (list/c string?))
 
+;; ---------------------------------------------------------
+
+(define-syntax-class workₑ
+  #:attributes []
+  ;; TODO: fill in the inside
+  [pattern {~work _ _}])
+
+(define-syntax-class movement-numberₑ
+  #:attributes []
+  ;; TODO: fill in the inside
+  [pattern {~movement-number _ _}])
+
+(define-syntax-class movement-titleₑ
+  #:attributes []
+  ;; TODO: fill in the inside
+  [pattern {~movement-title _ _}])
+
+(define-syntax-class identificationₑ
+  #:attributes []
+  ;; TODO: fill in the inside
+  [pattern {~identification _ _}])
+
+;; ---------------------------------------------------------
 

@@ -16,6 +16,8 @@
          "../time-signature.rkt"
          "../forward-backup.rkt"
          "../note.rkt"
+         "../pitch.rkt"
+         "../note-type.rkt"
          "../duration.rkt"
          "../voice.rkt"
          )

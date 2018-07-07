@@ -5,7 +5,8 @@
 (require racket/contract/base
          (submod txexpr safe)
          "str-number.rkt"
-         "util/tag.rkt")
+         "util/tag.rkt"
+         "util/stxparse.rkt")
 (module+ example
   (provide (all-defined-out)))
 
@@ -51,6 +52,12 @@
 (define-tag sign '() (list/c str-clef-sign/c))
 (define-tag line '() (list/c str-staff-line/c))
 (define-tag clef-octave-change '() (list/c str-integer?))
+
+;; ---------------------------------------------------------
+
+(define-syntax-class clefₑ
+  #:attributes []
+  [pattern {~clef _ _}])
 
 ;; ---------------------------------------------------------
 

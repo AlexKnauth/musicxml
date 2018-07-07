@@ -1,7 +1,7 @@
 #lang racket/base
 
-(provide forward
-         backup
+(provide forward ~forward forwardₑ
+         backup ~backup backupₑ
          forward-duration-divisions
          backup-duration-divisions
          forward-has-voice?
@@ -13,7 +13,9 @@
          "str-number.rkt"
          "duration.rkt"
          "voice.rkt"
-         "util/tag.rkt")
+         "editorial.rkt"
+         "util/tag.rkt"
+         "util/stxparse.rkt")
 
 ;; Forward elements can have voices, but Backup elements
 ;; cannot.
@@ -28,6 +30,23 @@
 
 ;; ---------------------------------------------------------
 
+(define-syntax-class forwardₑ
+  #:attributes [forward-duration-divisions]
+  [pattern {~forward ()
+                     (d:durationₑ
+                      :%editorial-voice
+                      {~optional :staffₑ})}
+    #:attr forward-duration-divisions (@ d.duration-divisions)])
+
+(define-syntax-class backupₑ
+  #:attributes [backup-duration-divisions]
+  [pattern {~backup ()
+                    (d:durationₑ
+                     :%editorial)}
+    #:attr backup-duration-divisions (@ d.duration-divisions)])
+
+;; ---------------------------------------------------------
+
 ;; private
 ;; Any -> Boolean
 (define (duration? v)
@@ -35,15 +54,15 @@
 
 ;; Forward -> PositiveDivisions
 (define (forward-duration-divisions fw)
-  (match fw
-    [(forward _ (list _ ... (? duration? d) _ ...))
-     (duration-divisions d)]))
+  (syntax-parse fw
+    [:forwardₑ
+     (@ forward-duration-divisions)]))
 
 ;; Backup -> PositiveDivisions
 (define (backup-duration-divisions bk)
-  (match bk
-    [(backup _ (list _ ... (? duration? d) _ ...))
-     (duration-divisions d)]))
+  (syntax-parse bk
+    [:backupₑ
+     (@ backup-duration-divisions)]))
 
 ;; ---------------------------------------------------------
 

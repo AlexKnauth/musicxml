@@ -7,7 +7,8 @@
          (submod txexpr safe)
          "str-number.rkt"
          "duration.rkt"
-         "util/tag.rkt")
+         "util/tag.rkt"
+         "util/stxparse.rkt")
 
 ;; ---------------------------------------------------------
 
@@ -29,6 +30,13 @@
 (define-tag fermata any/c any/c)
 (define-tag ending any/c any/c)
 (define-tag repeat any/c any/c)
+
+;; ---------------------------------------------------------
+
+(define-syntax-class barlineₑ
+  #:attributes []
+  ;; TODO: specify the structure of what can be in a barline
+  [pattern {~barline _ _}])
 
 ;; ---------------------------------------------------------
 

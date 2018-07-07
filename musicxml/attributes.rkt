@@ -12,7 +12,13 @@
          "time-signature.rkt"
          "clef.rkt"
          "key.rkt"
-         "util/tag.rkt")
+         "editorial.rkt"
+         "util/tag.rkt"
+         "util/stxparse.rkt")
+(module+ test
+  (require rackunit))
+
+;; ---------------------------------------------------------
 
 ;; The divisions type is used to express values in terms of the musical
 ;; divisions defined by the `divisions` element. 
@@ -43,10 +49,35 @@
 
 ;; ---------------------------------------------------------
 
+(define-syntax-class attributesₑ
+  #:attributes []
+  [pattern {~attributes
+            ()
+            (:%editorial
+             {~optional :divisionsₑ}
+             :keyₑ
+             ...
+             :timeₑ
+             ...
+             ;; TODO: staves, part-symbol, and instruments
+             :clefₑ
+             ...
+             ;; TODO: staff-details, transpose
+             ;; TODO: :directiveₑ ...
+             ;; TODO: measure-style
+             )}])
+
+(define-syntax-class divisionsₑ
+  #:attributes [divisions-number]
+  [pattern {~divisions () (n:str-pos-int)}
+    #:attr divisions-number (@ n.number)])
+
+;; ---------------------------------------------------------
+
 ;; Any -> Boolean
 (define (divisions? v)
-  (match v
-    [(divisions _ _) #true]
+  (syntax-parse v
+    [:divisionsₑ #true]
     [_ #false]))
 
 ;; Attributes -> Boolean
@@ -61,8 +92,27 @@
     [(attributes _ elements)
      (for/first ([e (in-list elements)]
                  #:when (divisions? e))
-       (match e
-         [(divisions _ (list str-div)) (string->number str-div)]))]))
+       (syntax-parse e
+         [:divisionsₑ (@ divisions-number)]))]))
+
+;; ---------------------------------------------------------
+
+(module+ test
+  (check-true (attributes-has-divisions?
+               #`(attributes (divisions "4"))))
+  (check-false (attributes-has-divisions?
+                #`(attributes)))
+
+  (check-true
+   (syntax-parse
+       #'(attributes
+          (divisions "24")
+          (key (fifths "3"))
+          (time (beats "4") (beat-type "4"))
+          (clef (sign "C") (line "3")))
+     [:attributesₑ #true]
+     [_ #false]))
+  )
 
 ;; ---------------------------------------------------------
 

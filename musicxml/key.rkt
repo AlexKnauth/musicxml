@@ -42,7 +42,7 @@
   [pattern {~key _
                  ({~optional cancel:cancelₑ}
                   fifths:fifthsₑ
-                  mode:modeₑ)}])
+                  {~optional mode:modeₑ})}])
 
 (define-syntax-class cancelₑ
   #:attributes [cancel-fifths]

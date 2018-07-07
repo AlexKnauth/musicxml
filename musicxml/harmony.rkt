@@ -3,13 +3,35 @@
 (provide (all-defined-out))
 
 (require racket/contract/base
+         syntax/parse/define
          (submod txexpr safe)
-         (except-in syntax/parse ~rest)
          "str-number.rkt"
          "attributes.rkt"
-         "note.rkt"
+         "pitch.rkt"
+         "frame.rkt"
          "util/tag.rkt"
-         "util/parse.rkt")
+         "util/parse.rkt"
+         "util/stxparse.rkt"
+         (for-syntax racket/base))
+
+(define-simple-macro
+  (define-str-enum ctc-name:id class-name:id
+    [[elem-name1:id] ... [elem-str2:str] ...])
+  #:with [elem-str1 ...]
+  (for/list ([elem-name1 (in-list (syntax->list #'[elem-name1 ...]))])
+    (datum->syntax elem-name1 (symbol->string (syntax-e elem-name1))))
+  (begin
+    (define elem-name1 elem-str1)
+    ...
+    (define ctc-name
+      (or/c elem-str1 ... elem-str2 ...))
+    (define-syntax-class class-name
+      [pattern elem-str1]
+      ...
+      [pattern elem-str2]
+      ...)))
+
+;; ---------------------------------------------------------
 
 ;; The harmony-type type differentiates different types of
 ;; harmonies when alternate harmonies are possible.
@@ -64,54 +86,45 @@
 ;; The "none" kind is used to explicitly encode absence of
 ;; chords or functional harmony.
 
-(define major "major")
-(define minor "minor")
-(define augmented "augmented")
-(define diminished "diminished")
+(define-str-enum str-kind-value/c str-kind-value
+  [[major]
+   [minor]
+   [augmented]
+   [diminished]
 
-(define dominant "dominant")
-(define major-seventh "major-seventh")
-(define minor-seventh "minor-seventh")
-(define diminished-seventh "diminished-seventh")
-(define augmented-seventh "augmented-seventh")
-(define half-diminished "half-diminished")
-(define major-minor "major-minor")
+   [dominant]
+   [major-seventh]
+   [minor-seventh]
+   [diminished-seventh]
+   [augmented-seventh]
+   [half-diminished]
+   [major-minor]
 
-(define major-sixth "major-sixth")
-(define minor-sixth "minor-sixth")
+   [major-sixth]
+   [minor-sixth]
 
-(define dominant-ninth "dominant-ninth")
-(define major-ninth "major-ninth")
-(define minor-ninth "minor-ninth")
+   [dominant-ninth]
+   [major-ninth]
+   [minor-ninth]
 
-(define dominant-11th "dominant-11th")
-(define major-11th "major-11th")
-(define minor-11th "minor-11th")
-(define dominant-13th "dominant-13th")
-(define major-13th "major-13th")
-(define minor-13th "minor-13th")
+   [dominant-11th]
+   [major-11th]
+   [minor-11th]
+   [dominant-13th]
+   [major-13th]
+   [minor-13th]
 
-(define suspended-second "suspended-second")
-(define suspended-fourth "suspended-fourth")
+   [suspended-second]
+   [suspended-fourth]
 
-(define pedal "pedal")
-(define power "power")
+   [pedal]
+   [power]
 
-(define other "other")
+   [other]
 
-(define str-kind-value/c
-  (or/c major minor augmented diminished
-        dominant major-seventh minor-seventh
-        diminished-seventh augmented-seventh
-        half-diminished major-minor
-        major-sixth minor-sixth
-        dominant-ninth major-ninth minor-ninth
-        dominant-11th major-11th minor-11th
-        dominant-13th major-13th minor-13th
-        suspended-second suspended-fourth
-        pedal power
-        other
-        "none"))
+   ["none"]])
+
+;; ---------------------------------------------------------
 
 ;; The degree-type-value type indicates whether the
 ;; current degree element is an addition, alteration, or
@@ -123,6 +136,11 @@
 
 (define str-degree-type-value/c
   (or/c add alter subtract))
+
+(define-syntax-class str-degree-type-value
+  [pattern "add"]
+  [pattern "alter"]
+  [pattern "subtract"])
 
 ;; ---------------------------------------------------------
 
@@ -146,13 +164,6 @@
 
 (define-tag function any/c (list/c string?))
 
-(define-tag root '()
-  (or/c (list/c (tag/c root-step))
-        (list/c (tag/c root-step) (tag/c root-alter))))
-
-(define-tag root-step any/c (list/c str-step/c))
-(define-tag root-alter any/c (list/c str-decimal?))
-
 ;; Kind indicates the type of chord. Degree elements can
 ;; then add, subtract, or alter from these starting points.
 ;; Since the kind element is the constant in all the
@@ -166,19 +177,6 @@
 ;; value is a number indicating which inversion is used:
 ;; 0 for root position, 1 for first inversion, etc.
 (define-tag inversion any/c (list/c str-nonnegative-integer?))
-
-;; The bass type is used to indicate a bass note in
-;; popular music chord symbols, e.g. G/C. It is generally
-;; not used in functional harmony, as inversion is
-;; generally not used in pop chord symbols. As with root,
-;; it is divided into step and alter elements, similar to
-;; pitches.
-(define-tag bass '()
-  (or/c (list/c (tag/c bass-step))
-        (list/c (tag/c bass-step) (tag/c bass-alter))))
-
-(define-tag bass-step any/c (list/c str-step/c))
-(define-tag bass-alter any/c (list/c str-decimal?))
 
 ;; The degree type is used to add, alter, or subtract
 ;; individual notes in the chord. The degree-value and
@@ -197,10 +195,57 @@
 
 ;; ---------------------------------------------------------
 
-(define-tag frame any/c any/c)
-(define-tag frame-strings any/c any/c)
-(define-tag frame-frets any/c any/c)
-(define-tag frame-note any/c any/c)
-(define-tag string any/c any/c)
-(define-tag fret any/c any/c)
+(define-syntax-class harmonyₑ
+  #:attributes []
+  [pattern {~harmony
+            _
+            (;; more than one chord means a polychord
+             chord:%harmony-chord
+             ...+
+             {optional frame:frameₑ})}])
+
+;; ---------------------------------------------------------
+
+(define-splicing-syntax-class %harmony-chord
+  [pattern {~seq {~or root:rootₑ :functionₑ}
+                 :kindₑ
+                 {~optional :inversionₑ}
+                 {~optional bass:bassₑ}
+                 :degreeₑ
+                 ...}])
+
+(define-syntax-class functionₑ
+  #:attributes []
+  [pattern {~function () (:str)}])
+
+(define-syntax-class kindₑ
+  #:attributes []
+  [pattern {~kind () kind-string*:str}
+    #:when (str-kind-value/c (@ kind-string*.string))])
+
+(define-syntax-class inversionₑ
+  #:attributes [inversion-number]
+  [pattern {~inversion () (inversion:str-nat)}
+    #:attr inversion-number (@ inversion.number)])
+
+(define-syntax-class degreeₑ
+  #:attributes []
+  [pattern {~degree ()
+                    (:degree-valueₑ
+                     :degree-alterₑ
+                     :degree-typeₑ)}])
+
+(define-syntax-class degree-valueₑ
+  #:attributes []
+  [pattern {~degree-value () (:str-pos-int)}])
+
+(define-syntax-class degree-alterₑ
+  #:attributes []
+  [pattern {~degree-alter () (:str-int)}])
+
+(define-syntax-class degree-typeₑ
+  #:attributes []
+  [pattern {~degree-type () (:str-degree-type-value)}])
+
+;; ---------------------------------------------------------
 

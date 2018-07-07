@@ -9,26 +9,24 @@
          (submod txexpr safe)
          "str-number.rkt"
          "attributes.rkt"
+         "pitch.rkt"
          "duration.rkt"
          "voice.rkt"
+         "editorial.rkt"
+         "note-type.rkt"
+         "util/stxparse.rkt"
          "util/tag.rkt")
 (module+ test
   (require rackunit))
 
 (define start-stop/c (or/c "start" "stop"))
 
-;; The step type represents a step of the diatonic scale,
-;; represented using the English letters A through G.
-(define str-step/c
-  (or/c "A" "B" "C" "D" "E" "F" "G"))
-
-;; The note-type type indicates the graphic note type,
-;; such as quarter or eighth.
-(define str-note-type/c
-  (or/c "1024th" "512th" "256th" "128th" "64th" "32nd" "16th"
-        "eighth" "quarter" "half" "whole"
-        "breve" "long" "maxima"))
-
+(define str-stem-value/c (or/c "down" "up" "none" "double"))
+(define-syntax-class str-stem-value
+  [pattern "down"]
+  [pattern "up"]
+  [pattern "none"]
+  [pattern "double"])
 
 ;; ---------------------------------------------------------
 
@@ -46,38 +44,100 @@
                 (tag/c beam) (tag/c notations) (tag/c lyric)
                 (tag/c play))))
 
-(define-tag rest '() '())
-
 (define-tag chord '() '())
-
-(define-tag pitch '()
-  (or/c (list/c (tag/c step) (tag/c octave))
-        (list/c (tag/c step) (tag/c alter) (tag/c octave))))
-
-(define-tag step '() (list/c str-step/c))
-(define-tag alter '() (list/c str-decimal?))
-(define-tag octave '() (list/c str-integer?))
-
-(define-tag unpitched '()
-  (or/c (list/c)
-        (list/c (tag/c display-step) (tag/c display-octave))))
-
-(define-tag display-step '() (list/c str-step/c))
-(define-tag display-octave '() (list/c str-integer?))
 
 (define-tag tie (attrs-must/c 'type start-stop/c) '())
 
-(define-tag type '() (list/c str-note-type/c))
-
-(define-tag dot '() '())
+(define-tag stem '() (list/c str-stem-value/c))
 
 ;; TODO: restrict the elements inside notations
-(define-tag notations '() any/c)
+(define-tag notations '()
+  (listof (or/c (tag/c footnote) (tag/c level)
+                (tag/c tied) (tag/c slur) (tag/c tuplet) (tag/c glissando)
+                (tag/c slide) (tag/c ornaments) (tag/c technical)
+                (tag/c articulations) (tag/c dynamics) (tag/c fermata)
+                (tag/c arpeggiate) (tag/c non-arpeggiate)
+                (tag/c accidental-mark) (tag/c other-notation))))
 
 (define-tag tied (attrs-must/c 'type start-stop/c) '())
 
 (define-tag cue '() '())
 (define-tag grace any/c '())
+
+;; ---------------------------------------------------------
+
+(define-syntax-class chordₑ
+  #:attributes []
+  [pattern {~chord () ()}])
+
+(define-syntax-class graceₑ
+  #:attributes []
+  [pattern {~grace _ ()}])
+
+(define-syntax-class cueₑ
+  #:attributes []
+  [pattern {~cue () ()}])
+
+;; ---------------------------------------------------------
+
+(define-syntax-class noteₑ
+  #:attributes []
+  [pattern {~note _
+             ({~or {~seq :graceₑ :%full-note :tie-info}
+                   {~seq :cueₑ :%full-note :durationₑ}
+                   {~seq :%full-note :durationₑ :tie-info}}
+              :%editorial-voice
+              {~optional :note-type/dots}
+              ;; TODO: accidental, etc.
+              {~optional :stemₑ}
+              ;; TODO: notehead, etc.
+              {~optional :staffₑ}
+              ;; TODO: beam
+              :notationsₑ
+              ...
+              ;; TODO: lyric, etc.
+              )}])
+
+(define-splicing-syntax-class %full-note
+  [pattern {~seq {~optional :chordₑ}
+                 {~or :pitchₑ :unpitchedₑ :restₑ}}])
+
+(define-syntax-class stemₑ
+  #:attributes []
+  ;; TODO
+  [pattern {~stem () (:str-stem-value)}])
+
+(define-splicing-syntax-class tie-info
+  #:attributes [start? stop?]
+  #:datum-literals [type]
+  [pattern {~seq {~alt {~optional {~tie ([type (~and start "start")]) ()}}
+                       {~optional {~tie ([type (~and stop "stop")]) ()}}}
+                 ...}
+    #:attr start? (and (@ start) #t)
+    #:attr stop? (and (@ stop) #t)])
+
+(define-splicing-syntax-class tied-info
+  #:attributes [start? stop?]
+  #:datum-literals [type]
+  [pattern {~seq {~alt {~optional {~tied ([type (~and start "start")]) ()}}
+                       {~optional {~tied ([type (~and stop "stop")]) ()}}}
+                 ...}
+    #:attr start? (and (@ start) #t)
+    #:attr stop? (and (@ stop) #t)])
+
+;; ---------------------------------------------------------
+
+;; Notations are musical notations, not XML notations. Multiple
+;; notations are allowed in order to represent multiple editorial
+;; levels.
+
+(define-syntax-class notationsₑ
+  #:attributes []
+  [pattern {~notations ()
+                       (:%editorial
+                        :tied-info
+                        ;; TODO: tied, slur, tuplet, etc.
+                        )}])
 
 ;; ---------------------------------------------------------
 

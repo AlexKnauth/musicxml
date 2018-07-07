@@ -8,13 +8,27 @@
          "str-number.rkt"
          "music-data.rkt"
          "attributes.rkt"
-         "util/tag.rkt")
+         "util/tag.rkt"
+         "util/stxparse.rkt")
 
 ;; ---------------------------------------------------------
 
 (define-tag measure
   (attrs-must/c 'number str-integer?)
   (listof music-data/c))
+
+;; ---------------------------------------------------------
+
+(define-syntax-class measureₑ
+  #:attributes [measure-number]
+  #:datum-literals [number width]
+  [pattern {~measure
+            ({~alt {~once [number N:str-int]}
+                   {~optional [width w:str-num]}}
+             ...)
+            (:%music-data
+             ...)}
+    #:attr measure-number (@ N.number)])
 
 ;; ---------------------------------------------------------
 

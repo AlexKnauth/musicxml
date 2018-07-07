@@ -14,6 +14,10 @@
          (for-syntax racket/base
                      racket/syntax))
 
+;; stx-e : Stx -> Any
+(define (stx-e stx)
+  (if (syntax? stx) (syntax-e stx) stx))
+
 ;; stx->datum : Stx -> Any
 (define (stx->datum stx)
   (syntax->datum (datum->syntax #f stx)))
@@ -25,7 +29,11 @@
     (syntax-parser
       [(_ attrs-pat:expr elems-pat:expr)
        #:with name sym
-       #'(? stx-txexpr? (app stx-txexpr->values 'name attrs-pat elems-pat))])))
+       #'(? stx-txexpr?
+            (app stx-txexpr->values
+                 (app stx-e 'name)
+                 attrs-pat
+                 elems-pat))])))
 
 (define-simple-macro
   (define-tag name:id attrs/c:expr elems/c:expr)
