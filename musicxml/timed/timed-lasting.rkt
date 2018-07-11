@@ -60,6 +60,20 @@
 
 ;; ---------------------------------------------------------
 
+(provide tila-overlap?
+         tilas-overlap?)
+
+;; tila-overlap? : [Tila X] [Tila X] -> Bool
+(define (tila-overlap? a b)
+  (time-period-overlap? (tila-period a)
+                        (tila-period b)))
+
+;; tilas-overlap? : [Listof [Tila X]] -> Bool
+(define (tilas-overlap? tlxs)
+  (time-periods-overlap? (map tila-period tlxs)))
+
+;; ---------------------------------------------------------
+
 ;; Sorting by time period
 
 (provide sort-by-time-period)

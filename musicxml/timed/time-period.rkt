@@ -13,7 +13,8 @@
          time-period-duration
          time-period-end
          time-period-contains-time?
-         time-period-overlap?)
+         time-period-overlap?
+         time-periods-overlap?)
 
 ;; A TimePeriod is a (time-period Time NonNegDivisions)
 (struct time-period [start duration] #:transparent)
@@ -41,6 +42,12 @@
 (define (time-period-overlap? a b)
   (and (time<? (time-period-start a) (time-period-end b))
        (time<? (time-period-start b) (time-period-end a))))
+
+;; time-periods-overlap? : [Listof TimePeriod] -> Bool
+;; Currently does not account for measure length
+(define (time-periods-overlap? tps)
+  (for/or ([(a b) (in-combinations tps 2)])
+    (time-period-overlap? a b)))
 
 ;; ------------------------------------------------------------------------
 

@@ -36,3 +36,9 @@
 
 ;; ---------------------------------------------------------
 
+;; timed-music-data-overlap? : [Timed MusicData] -> Bool
+(define (timed-music-data-overlap? tmds)
+  (tilas-overlap? (map timed-music-data->tila tmds)))
+
+;; ---------------------------------------------------------
+
