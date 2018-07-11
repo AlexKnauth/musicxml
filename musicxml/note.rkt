@@ -83,7 +83,10 @@
 (define-syntax-class noteₑ
   #:attributes [grace?
                 cue?
-                chord? pitch unpitched rest]
+                chord?
+                pitch/unpitched/rest
+                pitch unpitched rest
+                duration-divisions]
   [pattern {~note _
              ({~or {~seq grace:graceₑ :%full-note :tie-info}
                    {~seq cue:cueₑ :%full-note :durationₑ}
@@ -103,10 +106,16 @@
     #:attr cue? (and (@ cue) #true)])
 
 (define-splicing-syntax-class %full-note
-  #:attributes [chord? pitch unpitched rest]
+  #:attributes [chord?
+                pitch/unpitched/rest
+                pitch unpitched rest]
   [pattern {~seq {~optional chord:chordₑ}
-                 {~or pitch:pitchₑ unpitched:unpitchedₑ rest:restₑ}}
+                 {~and pitch/unpitched/rest :pitch/unpitched/rest}}
     #:attr chord? (and (@ chord) #true)])
+
+(define-syntax-class pitch/unpitched/rest
+  #:attributes [pitch unpitched rest]
+  [pattern {~or pitch:pitchₑ unpitched:unpitchedₑ rest:restₑ}])
 
 (define-syntax-class stemₑ
   #:attributes []
@@ -149,26 +158,15 @@
 
 ;; note-duration-divisions : Note -> PositiveDivisions
 (define (note-duration-divisions n)
-  ;; Any -> Boolean
-  (define (duration? v)
-    (match v [(duration _ _) #true] [_ #false]))
-  (match n
-    [(note _ (list _ ... (? duration? d) _ ...))
-     (duration-divisions d)]))
+  (syntax-parse n
+    [n:noteₑ
+     (@ n.duration-divisions)]))
 
-;; note-pitch/rest/unpitched : Note -> (U Pitch Rest Unpitched)
-(define (note-pitch/rest/unpitched n)
-  ;; Any -> Boolean
-  (define (p/r/u? v)
-    (match v
-      [(or (pitch _ _) (rest _ _) (unpitched _ _)) #true]
-      [_ #false]))
-  ;; the p/r/u must only come first or after these
-  (define pre?
-    (or/c (tag/c cue) (tag/c grace) (tag/c chord)))
-  (match n
-    [(note _ (list (? pre? _) ... (? p/r/u? p/r/u) _ ...))
-     p/r/u]))
+;; note-pitch/unpitched/rest : Note -> (U Pitch Unpitched Rest)
+(define (note-pitch/unpitched/rest n)
+  (syntax-parse n
+    [n:noteₑ
+     (@ n.pitch/unpitched/rest)]))
 
 ;; ---------------------------------------------------------
 
