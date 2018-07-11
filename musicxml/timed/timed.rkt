@@ -12,7 +12,7 @@
 ;; ---------------------------------------------------------
 
 ;; A [Timed X] is a (timed Time X)
-(struct timed [time value])
+(struct timed [time value] #:transparent)
 
 ;; [Timed X] -> Integer
 (define (timed-measure tx)
