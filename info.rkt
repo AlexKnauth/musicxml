@@ -6,6 +6,7 @@
   '("base"
     "txexpr"
     "txexpr-stxparse"
+    "graph"
     "srfi-lite-lib"
     ))
 
