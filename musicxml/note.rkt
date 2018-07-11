@@ -81,10 +81,12 @@
 ;; ---------------------------------------------------------
 
 (define-syntax-class noteₑ
-  #:attributes []
+  #:attributes [grace?
+                cue?
+                chord? pitch unpitched rest]
   [pattern {~note _
-             ({~or {~seq :graceₑ :%full-note :tie-info}
-                   {~seq :cueₑ :%full-note :durationₑ}
+             ({~or {~seq grace:graceₑ :%full-note :tie-info}
+                   {~seq cue:cueₑ :%full-note :durationₑ}
                    {~seq :%full-note :durationₑ :tie-info}}
               :%editorial-voice
               {~optional :note-type/dots}
@@ -96,11 +98,15 @@
               :notationsₑ
               ...
               ;; TODO: lyric, etc.
-              )}])
+              )}
+    #:attr grace? (and (@ grace) #true)
+    #:attr cue? (and (@ cue) #true)])
 
 (define-splicing-syntax-class %full-note
-  [pattern {~seq {~optional :chordₑ}
-                 {~or :pitchₑ :unpitchedₑ :restₑ}}])
+  #:attributes [chord? pitch unpitched rest]
+  [pattern {~seq {~optional chord:chordₑ}
+                 {~or pitch:pitchₑ unpitched:unpitchedₑ rest:restₑ}}
+    #:attr chord? (and (@ chord) #true)])
 
 (define-syntax-class stemₑ
   #:attributes []
