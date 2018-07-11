@@ -43,18 +43,41 @@
         (tag/c sound)))
 
 (define-syntax-class %music-data
-  [pattern :noteₑ]
-  [pattern :backupₑ]
-  [pattern :forwardₑ]
-  [pattern :directionₑ]
-  [pattern :attributesₑ]
-  [pattern :harmonyₑ]
-  [pattern :figured-bassₑ]
-  [pattern :printₑ]
-  [pattern :soundₑ]
-  [pattern :barlineₑ]
+  #:attributes
+  [;; for overlapping-time-period purposes
+   lasting-duration-divisions]
+
+  [pattern :noteₑ
+    #:attr lasting-duration-divisions (@ duration-divisions)]
+  [pattern :backupₑ
+    #:attr lasting-duration-divisions 0]
+  [pattern :forwardₑ
+    #:attr lasting-duration-divisions (@ forward-duration-divisions)]
+  [pattern :directionₑ
+    #:attr lasting-duration-divisions 0]
+  [pattern :attributesₑ
+    #:attr lasting-duration-divisions 0]
+  [pattern :harmonyₑ
+    #:attr lasting-duration-divisions 0]
+  [pattern :figured-bassₑ
+    #:attr lasting-duration-divisions 0]
+  [pattern :printₑ
+    #:attr lasting-duration-divisions 0]
+  [pattern :soundₑ
+    #:attr lasting-duration-divisions 0]
+  [pattern :barlineₑ
+    #:attr lasting-duration-divisions 0]
   ;; TODO: grouping, link, and bookmark
   )
+
+;; ---------------------------------------------------------
+
+;; MusicData -> NonnegativeDivisions
+;; for overlapping-time-period purposes
+(define (music-data-lasting-duration-divisions md)
+  (syntax-parse md
+    [md:%music-data
+     (@ md.lasting-duration-divisions)]))
 
 ;; ---------------------------------------------------------
 
