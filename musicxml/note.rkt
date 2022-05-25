@@ -88,7 +88,8 @@
                 pitch unpitched rest
                 duration-divisions]
   [pattern {~note _
-             ({~or {~seq grace:graceₑ :%full-note :tie-info}
+             (~!
+              {~or {~seq grace:graceₑ :%full-note :tie-info}
                    {~seq cue:cueₑ :%full-note :durationₑ}
                    {~seq :%full-note :durationₑ :tie-info}}
               :%editorial-voice

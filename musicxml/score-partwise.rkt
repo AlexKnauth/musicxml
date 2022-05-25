@@ -30,10 +30,10 @@
     ...+)))
 
 (define-syntax-class score-partwiseₑ
-  #:attributes []
+  #:attributes [header [part 1]]
   [pattern {~score-partwise
             _
-            (:%score-header :partₑ ...+)}])
+            (header:%score-header part:partₑ ...+)}])
 
 ;; ---------------------------------------------------------
 

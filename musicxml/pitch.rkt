@@ -113,7 +113,8 @@
   #:attributes [step-string alter-semitones octave]
   [pattern {~pitch
             ()
-            (:stepₑ
+            (~!
+             :stepₑ
              {~optional :alterₑ #:defaults ([alter-semitones 0])}
              :octaveₑ)}])
 
