@@ -6,6 +6,7 @@
          tag/c)
 
 (require racket/contract/base
+         racket/contract/region
          syntax/parse/define
          (submod txexpr safe)
          txexpr/stx
@@ -37,14 +38,21 @@
 
 (define-simple-macro
   (define-tag name:id attrs/c:expr elems/c:expr)
+  #:with name* (format-id #'name "~a*" #'name
+                          #:source #'name #:props #'name)
   #:with stxparse-pat-name (format-id #'name "~~~a" #'name
                                       #:source #'name #:props #'name)
   (begin
+    (define attrs-c attrs/c)
+    (define elems-c elems/c)
     (define-txexpr-pattern-expander stxparse-pat-name name)
     (define/contract/match-expander name
-      (-> attrs/c elems/c any)
+      (-> attrs-c elems-c any)
       (λ (attrs elems) (txexpr 'name attrs elems))
-      (txexpr-tag-match-transformer 'name))))
+      (txexpr-tag-match-transformer 'name))
+    (define/contract name*
+      (->* () (attrs-c) #:rest elems-c any)
+      (λ ([attrs '()] . elems) (txexpr 'name attrs elems)))))
 
 ;; attrs-must/c : Symbol FlatContract -> FlatContract
 (define (attrs-must/c key value/c)

@@ -53,6 +53,7 @@
   #:attributes [divisions-number
                 [key 1] [key.cancel-fifths 1] [key.fifths 1] [key.mode 1]
                 [time 1] [time.senza-misura? 1] [time.beats 1] [time.beat-type 1]
+                [clef 1] [clef.sign 1] [clef.line 1] [clef.clef-octave-change 1]
                 ]
   [pattern {~attributes
             ()
@@ -129,7 +130,9 @@
      (check-equal? (@ a.key.mode) (list #f))
      (check-equal? (@ a.time.senza-misura?) (list #f))
      (check-equal? (@ a.time.beats) (list 4))
-     (check-equal? (@ a.time.beat-type) (list 4))])
+     (check-equal? (@ a.time.beat-type) (list 4))
+     (check-equal? (@ a.clef.sign) (list "C"))
+     (check-equal? (@ a.clef.line) (list 3))])
   )
 
 ;; ---------------------------------------------------------
