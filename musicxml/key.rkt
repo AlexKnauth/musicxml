@@ -7,6 +7,8 @@
          "str-number.rkt"
          "util/stxparse.rkt"
          "util/tag.rkt")
+(module+ test
+  (require rackunit))
 
 ;; The mode type is used to specify major/minor and other
 ;; mode distinctions. Valid mode values include major,
@@ -38,11 +40,11 @@
 (define-tag mode '() (list/c str-mode/c))
 
 (define-syntax-class keyₑ
-  #:attributes []
+  #:attributes [cancel-fifths fifths mode]
   [pattern {~key _
-                 ({~optional cancel:cancelₑ}
-                  fifths:fifthsₑ
-                  {~optional mode:modeₑ})}])
+                 ({~optional :cancelₑ}
+                  :fifthsₑ
+                  {~optional :modeₑ})}])
 
 (define-syntax-class cancelₑ
   #:attributes [cancel-fifths]
@@ -60,3 +62,18 @@
     #:attr mode (@ mode*.string)
     #:when (str-mode/c (@ mode))])
 
+;; ---------------------------------------------------------
+
+(module+ test
+  (check-true
+   (syntax-parse
+       #'(key (fifths "3"))
+     [:keyₑ #true]
+     [_ #false]))
+
+  (syntax-parse
+      #'(key (fifths "3"))
+    [k:keyₑ
+     (check-equal? (@ k.cancel-fifths) #f)
+     (check-equal? (@ k.fifths) 3)
+     (check-equal? (@ k.mode) #f)]))

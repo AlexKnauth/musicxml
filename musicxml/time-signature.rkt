@@ -10,6 +10,8 @@
          "note-type.rkt"
          "util/stxparse.rkt"
          "util/tag.rkt")
+(module+ test
+  (require rackunit))
 
 ;; ---------------------------------------------------------
 
@@ -32,12 +34,14 @@
 ;; ---------------------------------------------------------
 
 (define-syntax-class timeₑ
-  [pattern {~time _ (sm:senza-misuraₑ)}]
-  [pattern {~time _ (b:beatsₑ t:beat-typeₑ)}])
+  #:attributes [senza-misura? beats beat-type]
+  [pattern {~time _ (:senza-misuraₑ)} #:attr beats #f #:attr beat-type #f]
+  [pattern {~time _ (:beatsₑ :beat-typeₑ)} #:attr senza-misura? #f])
 
 (define-syntax-class senza-misuraₑ
-  #:attributes []
-  [pattern {~senza-misura () ()}])
+  #:attributes [senza-misura?]
+  [pattern {~senza-misura () ()}
+    #:attr senza-misura? #t])
 
 (define-syntax-class beatsₑ
   #:attributes [beats]
@@ -45,8 +49,23 @@
     #:attr beats (@ b.number)])
 
 (define-syntax-class beat-typeₑ
-  #:attributes []
-  [pattern {~beat-type () (t:str-pos-int)}])
+  #:attributes [beat-type]
+  [pattern {~beat-type () (t:str-pos-int)}
+    #:attr beat-type (@ t.number)])
 
 ;; ---------------------------------------------------------
 
+(module+ test
+  (check-true
+   (syntax-parse
+       #'(time (beats "4") (beat-type "4"))
+     [:timeₑ #true]
+     [_ #false]))
+
+  (syntax-parse
+      #'(time (beats "4") (beat-type "4"))
+    [t:timeₑ
+     (check-equal? (@ t.senza-misura?) #f)
+     (check-equal? (@ t.beats) 4)
+     (check-equal? (@ t.beat-type) 4)])
+  )

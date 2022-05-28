@@ -50,17 +50,20 @@
 ;; ---------------------------------------------------------
 
 (define-syntax-class attributesₑ
-  #:attributes []
+  #:attributes [divisions-number
+                [key 1] [key.cancel-fifths 1] [key.fifths 1] [key.mode 1]
+                [time 1] [time.senza-misura? 1] [time.beats 1] [time.beat-type 1]
+                ]
   [pattern {~attributes
             ()
             (:%editorial
              {~optional :divisionsₑ}
-             :keyₑ
+             key:keyₑ
              ...
-             :timeₑ
+             time:timeₑ
              ...
              ;; TODO: staves, part-symbol, and instruments
-             :clefₑ
+             clef:clefₑ
              ...
              ;; TODO: staff-details, transpose
              ;; TODO: :directiveₑ ...
@@ -112,6 +115,21 @@
           (clef (sign "C") (line "3")))
      [:attributesₑ #true]
      [_ #false]))
+
+  (syntax-parse
+      #'(attributes
+         (divisions "24")
+         (key (fifths "3"))
+         (time (beats "4") (beat-type "4"))
+         (clef (sign "C") (line "3")))
+    [a:attributesₑ
+     (check-equal? (@ a.divisions-number) 24)
+     (check-equal? (@ a.key.cancel-fifths) (list #f))
+     (check-equal? (@ a.key.fifths) (list 3))
+     (check-equal? (@ a.key.mode) (list #f))
+     (check-equal? (@ a.time.senza-misura?) (list #f))
+     (check-equal? (@ a.time.beats) (list 4))
+     (check-equal? (@ a.time.beat-type) (list 4))])
   )
 
 ;; ---------------------------------------------------------
