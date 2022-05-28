@@ -96,9 +96,8 @@
           (set-divisions cs (string->number div-str))]
          [(key _ _) cs]
          [(clef _ _) cs]
-         ;; TODO: figure out how to update the state when the time
-         ;;       signature changes
-         [(time _ _) (eprintf "warning: cursor-state-update/time ??\n") cs]
+         ;; time signature does not affect number of divisions per quarter note
+         [(time _ _) cs]
          ;; TODO: more
          ))]))
 
